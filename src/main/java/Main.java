@@ -7,7 +7,7 @@ public class Main {
         // You can use print statements as follows for debugging, they'll be visible when running tests.
         System.out.println("Logs from your program will appear here!");
 
-        String OK_RESPONSE = "HTTP/1.1 200 OK\\r\\n\\r\\n";
+        String OK_RESPONSE = "HTTP/1.1 200 OK\r\n\r\n";
 
         // Uncomment this block to pass the first stage
         try (ServerSocket serverSocket = new ServerSocket(4221)) {
