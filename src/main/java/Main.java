@@ -21,6 +21,8 @@ public class Main {
 
             session.getOutputStream().write(OK_RESPONSE.getBytes());
 
+            session.close();
+
         } catch (IOException e) {
             System.out.println("IOException: " + e.getMessage());
         }
