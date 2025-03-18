@@ -8,6 +8,7 @@ public class Main {
         System.out.println("Logs from your program will appear here!");
 
         String OK_RESPONSE = "HTTP/1.1 200 OK\r\n\r\n";
+        String NOT_FOUND_RESPONSE = "HTTP/1.1 404 Not Found\r\n\r\n";
 
         // Uncomment this block to pass the first stage
         try (ServerSocket serverSocket = new ServerSocket(4221)) {
@@ -19,8 +20,18 @@ public class Main {
             Socket session = serverSocket.accept();// Wait for connection from client.
             System.out.println("accepted new connection");
 
-            session.getOutputStream().write(OK_RESPONSE.getBytes());
+            InputStream inputStream = session.getInputStream();
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
 
+            String[] requestLine = bufferedReader.readLine().split(" ");
+            String requestTarget = requestLine[1];
+            if (requestTarget.equals("/")) {
+                session.getOutputStream().write(OK_RESPONSE.getBytes());
+            } else {
+                session.getOutputStream().write(NOT_FOUND_RESPONSE.getBytes());
+            }
+
+            bufferedReader.close();
             session.close();
 
         } catch (IOException e) {
