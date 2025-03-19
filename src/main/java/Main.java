@@ -27,6 +27,13 @@ public class Main {
             String requestTarget = requestLine[1];
             if (requestTarget.equals("/")) {
                 session.getOutputStream().write(OK_RESPONSE.getBytes());
+            } else if (requestTarget.startsWith("/echo/")) {
+                String body = requestTarget.substring("/echo/".length());
+                String response = String.format(
+                        "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s",
+                        body.length(),
+                        body);
+                session.getOutputStream().write(response.getBytes());
             } else {
                 session.getOutputStream().write(NOT_FOUND_RESPONSE.getBytes());
             }
