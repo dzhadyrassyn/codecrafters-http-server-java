@@ -21,6 +21,7 @@ public class Main {
             System.out.println("accepted new connection");
 
             InputStream inputStream = session.getInputStream();
+
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
 
             String[] requestLine = bufferedReader.readLine().split(" ");
@@ -33,6 +34,22 @@ public class Main {
                         "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s",
                         body.length(),
                         body);
+                session.getOutputStream().write(response.getBytes());
+            } else if (requestTarget.startsWith("/user-agent")) {
+                String userAgent = "";
+                String line;
+
+                while ((line = bufferedReader.readLine()) != null && !line.isEmpty()) {
+                    if (line.startsWith("User-Agent: ")) {
+                        userAgent = line.substring("User-Agent: " .length());
+                        break;
+                    }
+                }
+
+                String response = String.format(
+                        "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s",
+                        userAgent.length(),
+                        userAgent);
                 session.getOutputStream().write(response.getBytes());
             } else {
                 session.getOutputStream().write(NOT_FOUND_RESPONSE.getBytes());
