@@ -1,14 +1,18 @@
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Main {
     public static void main(String[] args) {
         // You can use print statements as follows for debugging, they'll be visible when running tests.
         System.out.println("Logs from your program will appear here!");
 
-        String OK_RESPONSE = "HTTP/1.1 200 OK\r\n\r\n";
-        String NOT_FOUND_RESPONSE = "HTTP/1.1 404 Not Found\r\n\r\n";
+        ExecutorService executorService = Executors.newFixedThreadPool(10);
 
         // Uncomment this block to pass the first stage
         try (ServerSocket serverSocket = new ServerSocket(4221)) {
@@ -17,9 +21,33 @@ public class Main {
             // ensures that we don't run into 'Address already in use' errors
             serverSocket.setReuseAddress(true);
 
-            Socket session = serverSocket.accept();// Wait for connection from client.
-            System.out.println("accepted new connection");
+            while (true) {
+                Socket socket = serverSocket.accept();
+                System.out.println("accepted new connection");
+                executorService.execute(new MyJob(socket));
+            }
 
+        } catch (IOException e) {
+            System.out.println("IOException: " + e.getMessage());
+        }
+    }
+}
+
+class MyJob implements Runnable {
+
+    Socket session;
+
+    String OK_RESPONSE = "HTTP/1.1 200 OK\r\n\r\n";
+    String NOT_FOUND_RESPONSE = "HTTP/1.1 404 Not Found\r\n\r\n";
+
+    public MyJob(Socket socket) {
+        this.session = socket;
+    }
+
+    @Override
+    public void run() {
+
+        try {
             InputStream inputStream = session.getInputStream();
 
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
@@ -57,9 +85,9 @@ public class Main {
 
             bufferedReader.close();
             session.close();
-
         } catch (IOException e) {
-            System.out.println("IOException: " + e.getMessage());
+            throw new RuntimeException(e);
         }
+
     }
 }
