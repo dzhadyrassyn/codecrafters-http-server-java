@@ -24,28 +24,18 @@ public class Main {
             while (true) {
                 Socket socket = serverSocket.accept();
                 System.out.println("accepted new connection");
-                executorService.execute(new MyJob(socket));
+                executorService.submit(() -> handleRequest(socket));
             }
 
         } catch (IOException e) {
             System.out.println("IOException: " + e.getMessage());
         }
     }
-}
 
-class MyJob implements Runnable {
+    private static void handleRequest(Socket session) {
 
-    Socket session;
-
-    String OK_RESPONSE = "HTTP/1.1 200 OK\r\n\r\n";
-    String NOT_FOUND_RESPONSE = "HTTP/1.1 404 Not Found\r\n\r\n";
-
-    public MyJob(Socket socket) {
-        this.session = socket;
-    }
-
-    @Override
-    public void run() {
+        String OK_RESPONSE = "HTTP/1.1 200 OK\r\n\r\n";
+        String NOT_FOUND_RESPONSE = "HTTP/1.1 404 Not Found\r\n\r\n";
 
         try {
             InputStream inputStream = session.getInputStream();
@@ -88,6 +78,5 @@ class MyJob implements Runnable {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
     }
 }
