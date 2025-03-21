@@ -32,6 +32,7 @@ public class Main {
     private static void handleRequest(Socket session, String[] args) {
 
         String OK_RESPONSE = "HTTP/1.1 200 OK\r\n\r\n";
+        String CREATED_RESPONSE = "HTTP/1.1 201 Created\r\n\r\n";
         String NOT_FOUND_RESPONSE = "HTTP/1.1 404 Not Found\r\n\r\n";
 
         try {
@@ -67,14 +68,38 @@ public class Main {
                         userAgent);
                 session.getOutputStream().write(response.getBytes());
             } else if (requestTarget.startsWith("/files")) {
+                String methodType = requestLine[0];
                 String filename = requestTarget.substring("/files/".length());
                 File file = new File(args[1] + "/" + filename);
-                if (!file.exists()) {
-                    session.getOutputStream().write(NOT_FOUND_RESPONSE.getBytes());
+                if (methodType.equals("GET")) {
+                    if (!file.exists()) {
+                        session.getOutputStream().write(NOT_FOUND_RESPONSE.getBytes());
+                    } else {
+                        String response = getString(file);
+                        session.getOutputStream().write(response.getBytes());
+                    }
                 } else {
-                    String response = getString(file);
-                    session.getOutputStream().write(response.getBytes());
+                    String line;
+                    int size = 0;
+                    while ((line = bufferedReader.readLine()) != null) {
+                        if (line.startsWith("Content-Length: ")) {
+                            size = Integer.parseInt(line.substring("Content-Length: ".length()));
+                        }
+                        if (line.isEmpty()) {
+                            break;
+                        }
+                    }
+
+                    char[] buffer = new char[size];
+                    bufferedReader.read(buffer, 0, buffer.length);
+
+                    try(BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file))) {
+                        bufferedWriter.write(buffer);
+                    }
+
+                    session.getOutputStream().write(CREATED_RESPONSE.getBytes());
                 }
+
             }
             else {
                 session.getOutputStream().write(NOT_FOUND_RESPONSE.getBytes());
