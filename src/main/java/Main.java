@@ -1,7 +1,4 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
@@ -24,7 +21,7 @@ public class Main {
             while (true) {
                 Socket socket = serverSocket.accept();
                 System.out.println("accepted new connection");
-                executorService.submit(() -> handleRequest(socket));
+                executorService.submit(() -> handleRequest(socket, args));
             }
 
         } catch (IOException e) {
@@ -32,7 +29,7 @@ public class Main {
         }
     }
 
-    private static void handleRequest(Socket session) {
+    private static void handleRequest(Socket session, String[] args) {
 
         String OK_RESPONSE = "HTTP/1.1 200 OK\r\n\r\n";
         String NOT_FOUND_RESPONSE = "HTTP/1.1 404 Not Found\r\n\r\n";
@@ -69,7 +66,17 @@ public class Main {
                         userAgent.length(),
                         userAgent);
                 session.getOutputStream().write(response.getBytes());
-            } else {
+            } else if (requestTarget.startsWith("/files")) {
+                String filename = requestTarget.substring("/files/".length());
+                File file = new File(args[1] + "/" + filename);
+                if (!file.exists()) {
+                    session.getOutputStream().write(NOT_FOUND_RESPONSE.getBytes());
+                } else {
+                    String response = getString(file);
+                    session.getOutputStream().write(response.getBytes());
+                }
+            }
+            else {
                 session.getOutputStream().write(NOT_FOUND_RESPONSE.getBytes());
             }
 
@@ -78,5 +85,19 @@ public class Main {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private static String getString(File file) throws IOException {
+        BufferedReader fileReader = new BufferedReader(new FileReader(file));
+        String line;
+        StringBuilder lines = new StringBuilder();
+        while ((line = fileReader.readLine()) != null) {
+            lines.append(line);
+        }
+        return String.format(
+                "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: %d\r\n\r\n%s",
+                file.length(),
+                lines
+        );
     }
 }
