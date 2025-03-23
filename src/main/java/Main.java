@@ -1,6 +1,7 @@
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -46,11 +47,26 @@ public class Main {
                 session.getOutputStream().write(OK_RESPONSE.getBytes());
             } else if (requestTarget.startsWith("/echo/")) {
                 String body = requestTarget.substring("/echo/".length());
-                String response = String.format(
-                        "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s",
-                        body.length(),
-                        body);
-                session.getOutputStream().write(response.getBytes());
+                String line;
+                while ((line = bufferedReader.readLine()) != null && !line.isEmpty()) {
+                    if (line.startsWith("Accept-Encoding: ")) {
+                        break;
+                    }
+                }
+                String contentEncoding = Optional.ofNullable(line).filter(it -> it.endsWith("gzip")).map(l -> "gzip").orElse("");
+                if (contentEncoding.equals("gzip")) {
+                    String response = String.format(
+                            "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Encoding: gzip\r\nContent-Length: %d\r\n\r\n%s",
+                            body.length(),
+                            body);
+                    session.getOutputStream().write(response.getBytes());
+                } else {
+                    String response = String.format(
+                            "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s",
+                            body.length(),
+                            body);
+                    session.getOutputStream().write(response.getBytes());
+                }
             } else if (requestTarget.startsWith("/user-agent")) {
                 String userAgent = "";
                 String line;
