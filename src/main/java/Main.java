@@ -53,7 +53,7 @@ public class Main {
                         break;
                     }
                 }
-                String contentEncoding = Optional.ofNullable(line).filter(it -> it.endsWith("gzip")).map(l -> "gzip").orElse("");
+                String contentEncoding = Optional.ofNullable(line).filter(it -> it.contains("gzip")).map(l -> "gzip").orElse("");
                 if (contentEncoding.equals("gzip")) {
                     String response = String.format(
                             "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Encoding: gzip\r\nContent-Length: %d\r\n\r\n%s",
