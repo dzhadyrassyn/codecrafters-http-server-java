@@ -4,6 +4,7 @@ import java.net.Socket;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.zip.GZIPOutputStream;
 
 public class Main {
     public static void main(String[] args) {
@@ -55,11 +56,17 @@ public class Main {
                 }
                 String contentEncoding = Optional.ofNullable(line).filter(it -> it.contains("gzip")).map(l -> "gzip").orElse("");
                 if (contentEncoding.equals("gzip")) {
+                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                    GZIPOutputStream gzipOutputStream = new GZIPOutputStream(byteArrayOutputStream);
+                    gzipOutputStream.write(body.getBytes());
+                    gzipOutputStream.close();
+
+                    byte[] compressedResponse = byteArrayOutputStream.toByteArray();
                     String response = String.format(
-                            "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Encoding: gzip\r\nContent-Length: %d\r\n\r\n%s",
-                            body.length(),
-                            body);
+                            "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Encoding: gzip\r\nContent-Length: %d\r\n\r\n",
+                            compressedResponse.length);
                     session.getOutputStream().write(response.getBytes());
+                    session.getOutputStream().write(compressedResponse);
                 } else {
                     String response = String.format(
                             "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s",
