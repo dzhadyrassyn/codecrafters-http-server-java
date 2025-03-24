@@ -136,6 +136,7 @@ public class Main {
     }
 
     private static String getString(File file) throws IOException {
+
         BufferedReader fileReader = new BufferedReader(new FileReader(file));
         String line;
         StringBuilder lines = new StringBuilder();
